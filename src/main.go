@@ -43,6 +43,8 @@ func isCorrectInput(input string) bool {
 func startGame(word string) {
 	var hint []rune
 
+	triedLetters := make(map[rune]bool)
+
 	for i := 0; i < len(word); i++ {
 		hint = append(hint, '_')
 	}
@@ -54,12 +56,16 @@ func startGame(word string) {
 		fmt.Println(string(hint))
 		fmt.Printf("Mistakes: %d", mistakes)
 		fmt.Println(art[mistakes])
+		for key := range triedLetters {
+			fmt.Printf("%c", key)
+		}
+		fmt.Println()
 
 		fmt.Print("guess?: ")
 
 		_, err := fmt.Scanln(&guessStr)
 		if err != nil {
-			panic("error reading from stdin")
+			continue
 		}
 		for _, char := range guessStr {
 			guess = char
@@ -74,8 +80,10 @@ func startGame(word string) {
 				}
 				count++
 			}
-		} else {
+
+		} else if !triedLetters[guess] {
 			mistakes++
+			triedLetters[guess] = true
 		}
 		if mistakes == 6 {
 			fmt.Println(art[6])
