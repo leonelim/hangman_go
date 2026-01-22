@@ -8,9 +8,13 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"unicode/utf8"
 )
 
-const wordsFilePath string = "resources/words.txt"
+const (
+	wordsFilePath string = "resources/words.txt"
+	maxAttempts   int    = 6
+)
 
 func main() {
 	var input string
@@ -19,6 +23,7 @@ func main() {
 	_, err := fmt.Scanf("%s", &input)
 	for err != nil || !isCorrectInput(input) || !strings.ContainsAny(input, "yn") {
 		fmt.Println("Wrong input! try again!")
+		fmt.Print("Would you like to start a new game? (y/n): ")
 		_, err = fmt.Scanf("%s", &input)
 	}
 
@@ -37,58 +42,75 @@ func main() {
 }
 
 func isCorrectInput(input string) bool {
-	return len(input) == 1
+	input = strings.ToLower(input)
+	guess, _ := utf8.DecodeRuneInString(input)
+	return len(input) == 1 && guess >= 97 && guess < 123
 }
 
 func startGame(word string) {
 	var hint []rune
-
 	triedLetters := make(map[rune]bool)
+	var guessStr string
+	var guess rune
+	mistakes := 0
 
 	for i := 0; i < len(word); i++ {
 		hint = append(hint, '_')
 	}
-	var guess rune
-	var guessStr string
-	mistakes := 0
 
-	for slices.Contains(hint, '_') && mistakes < 6 {
-		fmt.Println(string(hint))
+	for !isGameOver(hint, mistakes) {
 		fmt.Printf("Mistakes: %d", mistakes)
 		fmt.Println(art[mistakes])
+
+		fmt.Print("tried letters: ")
 		for key := range triedLetters {
 			fmt.Printf("%c", key)
 		}
 		fmt.Println()
+		fmt.Println(string(hint))
 
 		fmt.Print("guess?: ")
 
 		_, err := fmt.Scanln(&guessStr)
-		if err != nil {
+		if err != nil || !isCorrectInput(guessStr) {
+			fmt.Println("incorrect input! try again!")
 			continue
 		}
-		for _, char := range guessStr {
-			guess = char
-			break
-		}
+		guess = getFirstRune(guessStr)
 
 		if strings.ContainsRune(word, guess) {
-			count := 0
-			for _, char := range word {
-				if char == guess {
-					hint[count] = guess
+			hintIndex := 0
+			for _, wordChar := range word {
+				if wordChar == guess {
+					hint[hintIndex] = guess
 				}
-				count++
+				hintIndex++
 			}
-
 		} else if !triedLetters[guess] {
 			mistakes++
 			triedLetters[guess] = true
 		}
-		if mistakes == 6 {
-			fmt.Println(art[6])
-		}
+		fmt.Printf("\n\n************\n")
 	}
+	if mistakes == maxAttempts {
+		fmt.Println(art[maxAttempts])
+		fmt.Println("You lose!")
+	} else {
+		fmt.Println("You win!")
+	}
+}
+
+func isGameOver(hint []rune, mistakes int) bool {
+	return slices.Contains(hint, '_') && mistakes == maxAttempts
+}
+
+func getFirstRune(str string) rune {
+	var res rune
+	for _, char := range str {
+		res = char
+		break
+	}
+	return res
 }
 
 func readWordFromFile() (string, error) {
@@ -96,7 +118,12 @@ func readWordFromFile() (string, error) {
 	if err != nil {
 		return "", errors.New("failed to open file")
 	}
-	defer file.Close()
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
 	var lines []string
 	scanner := bufio.NewScanner(file)
 	i := true
