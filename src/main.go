@@ -55,33 +55,29 @@ func isCorrectInput(input string) bool {
 func startGame(word string) {
 	var hint []rune
 	triedLetters := make(map[rune]bool)
-	var guessStr string
-	var guess rune
 	mistakes := 0
 
-	for i := 0; i < len(word); i++ {
+	for range word {
 		hint = append(hint, '_')
 	}
 
 	for !isGameOver(hint, mistakes) {
-		fmt.Printf("Mistakes: %d", mistakes)
+		fmt.Printf("Mistakes: %d\n", mistakes)
 		fmt.Println(art[mistakes])
 
 		fmt.Print("tried letters: ")
 		for key := range triedLetters {
 			fmt.Printf("%c", key)
 		}
-		fmt.Println()
-		fmt.Println(string(hint))
+		fmt.Printf("\n%s", string(hint))
 
 		fmt.Print("guess?: ")
 
-		_, err := fmt.Scanln(&guessStr)
-		if err != nil || !isCorrectInput(guessStr) {
+		guess, err := readInput()
+		if err != nil {
 			fmt.Println("incorrect input! try again!")
 			continue
 		}
-		guess = getFirstRune(guessStr)
 
 		if strings.ContainsRune(word, guess) {
 			hintIndex := 0
@@ -123,12 +119,7 @@ func readWordFromFile() (string, error) {
 	if err != nil {
 		return "", errors.New("failed to open file")
 	}
-	defer func() {
-		err := file.Close()
-		if err != nil {
-			panic(err)
-		}
-	}()
+	defer file.Close()
 	var lines []string
 	scanner := bufio.NewScanner(file)
 	i := true
