@@ -17,28 +17,33 @@ const (
 )
 
 func main() {
-	var input string
-
 	fmt.Print("Would you like to start a new game? (y/n): ")
-	_, err := fmt.Scanf("%s", &input)
-	for err != nil || !isCorrectInput(input) || !strings.ContainsAny(input, "yn") {
+	input, err := readInput()
+	for err != nil || input != 'y' && input != 'n' {
 		fmt.Println("Wrong input! try again!")
 		fmt.Print("Would you like to start a new game? (y/n): ")
-		_, err = fmt.Scanf("%s", &input)
+		input, err = readInput()
 	}
-
-	input = strings.ToLower(input)
 	switch input {
-	case "y":
+	case 'y':
 		word, err := readWordFromFile()
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("error reading from file")
 			return
 		}
 		startGame(word)
-	case "n":
-		break
+	case 'n':
+		return
 	}
+}
+
+func readInput() (rune, error) {
+	var input string
+	_, err := fmt.Scanf("%s", &input)
+	if err != nil || !isCorrectInput(input) {
+		return 0, errors.New("incorrect input")
+	}
+	return getFirstRune(input), nil
 }
 
 func isCorrectInput(input string) bool {
@@ -90,7 +95,7 @@ func startGame(word string) {
 			mistakes++
 			triedLetters[guess] = true
 		}
-		fmt.Printf("\n\n************\n")
+		fmt.Printf("\n************\n")
 	}
 	if mistakes == maxAttempts {
 		fmt.Println(art[maxAttempts])
