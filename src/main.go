@@ -17,23 +17,26 @@ const (
 )
 
 func main() {
-	fmt.Print("Would you like to start a new game? (y/n): ")
-	input, err := readInput()
-	for err != nil || input != 'y' && input != 'n' {
-		fmt.Println("Wrong input! try again!")
+	for {
 		fmt.Print("Would you like to start a new game? (y/n): ")
-		input, err = readInput()
-	}
-	switch input {
-	case 'y':
-		word, err := readWordFromFile()
-		if err != nil {
-			fmt.Println("error reading from file")
+		input, err := readInput()
+		for err != nil || input != 'y' && input != 'n' {
+			fmt.Println("Wrong input! try again!")
+			fmt.Print("Would you like to start a new game? (y/n): ")
+			input, err = readInput()
+		}
+		switch input {
+		case 'y':
+			word, err := readWordFromFile()
+			if err != nil {
+				fmt.Println("error reading from file")
+				return
+			}
+			startGame(word)
+		case 'n':
 			return
 		}
-		startGame(word)
-	case 'n':
-		return
+
 	}
 }
 
@@ -69,7 +72,7 @@ func startGame(word string) {
 		for key := range triedLetters {
 			fmt.Printf("%c", key)
 		}
-		fmt.Printf("\n%s", string(hint))
+		fmt.Printf("\n%s\n", string(hint))
 
 		fmt.Print("guess?: ")
 
@@ -119,7 +122,6 @@ func readWordFromFile() (string, error) {
 	if err != nil {
 		return "", errors.New("failed to open file")
 	}
-	defer file.Close()
 	var lines []string
 	scanner := bufio.NewScanner(file)
 	i := true
@@ -130,5 +132,9 @@ func readWordFromFile() (string, error) {
 		lines = append(lines, scanner.Text())
 	}
 	randInt := rand.IntN(counter - 1)
+	err = file.Close()
+	if err != nil {
+		fmt.Println("failed to close file")
+	}
 	return lines[randInt], nil
 }
