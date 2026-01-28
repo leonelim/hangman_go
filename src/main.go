@@ -49,7 +49,7 @@ func readInput() (rune, error) {
 func isCorrectInput(input string) bool {
 	input = strings.ToLower(input)
 	guess, _ := utf8.DecodeRuneInString(input)
-	return len(input) == 1 && guess >= 97 && guess < 123
+	return guess >= 97 && guess < 123
 }
 
 func startGame(word string) {
@@ -106,11 +106,11 @@ func startGame(word string) {
 }
 
 func isGameOver(hint []rune, mistakes int) bool {
-	return slices.Contains(hint, '_') && mistakes == maxAttempts
+	return !slices.Contains(hint, '_') || mistakes == maxAttempts
 }
 
 func getFirstRune(str string) rune {
-	var res rune
+	res := rune(0xFFFD)
 	for _, char := range str {
 		res = char
 		break
